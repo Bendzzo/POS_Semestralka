@@ -8,16 +8,18 @@
 
 #include "../include/socket.h"
 
+//Upravena trieda Socket, pouzita z shared/POS
+
 int passive_socket_init(const int port) {
   int passSock;
   struct sockaddr_in servAddr;
-  // Vytvorenie schránky pre komunikáciu cez internet
+  // Vytvorenie schrÃ¡nky pre komunikÃ¡ciu cez internet
   passSock = socket(AF_INET, SOCK_STREAM, 0);
   if (passSock < 0) {
     perror("Chyba pri vytvarani schranky");
     return -1;
   }
-  // Nastavenie adresy pre potreby komunikácie
+  // Nastavenie adresy pre potreby komunikÃ¡cie
   memset((char*)&servAddr, 0, sizeof(servAddr));
   servAddr.sin_family = AF_INET;
   servAddr.sin_addr.s_addr = INADDR_ANY;
@@ -26,7 +28,7 @@ int passive_socket_init(const int port) {
     perror("Chyba pri nastavovani adresy schranky");
     return -1;
   }
-  // Vytvorenie pasívnej schránky pre prijímanie pripojení
+  // Vytvorenie pasÃ­vnej schrÃ¡nky pre prijÃ­manie pripojenÃ­
   listen(passSock, 5);
   return passSock;
 }
@@ -53,7 +55,7 @@ int connect_to_server(const char * name, const int port)
   memset(&hints, 0, sizeof(hints));
   
   hints.ai_family = AF_INET; // IP4 aj IP6
-  hints.ai_socktype = SOCK_STREAM; // Spo�ahliv� komunik�cia
+  hints.ai_socktype = SOCK_STREAM; // Spo¾ahlivá komunikácia
   hints.ai_protocol = IPPROTO_TCP; // TCP/IP
 
   char portText[10]= {0};

@@ -33,8 +33,8 @@ void start_server(Server *server) {
 
     for (int i = 0; i < PLAYER_COUNT; i++) {
         player_indices[i] = i;
-        args[i][0] = server;        // UkazovateÄľ na server
-        args[i][1] = &player_indices[i]; // ID hrĂˇÄŤa
+        args[i][0] = server;        
+        args[i][1] = &player_indices[i]; 
         pthread_create(&threads[i], NULL, handle_client, args[i]);
     }
 
@@ -53,13 +53,11 @@ void *handle_client(void *arg) {
 
     char buffer[10];
 
-    // Po pripojenĂ­ klienta okamĹľite odoĹˇleme mapu
     send(server->client_sockets[player_id], &server->game, sizeof(Game), 0);
 
     while (1) {
         pthread_mutex_lock(&server->game_mutex);
 
-        // ÄŚakĂˇ, kĂ˝m nie je jeho ĹĄah
         while (server->turn != player_id)
             pthread_cond_wait(&server->turn_cond, &server->game_mutex);
 
@@ -69,7 +67,7 @@ void *handle_client(void *arg) {
         if (make_move(&server->game, player_id + 1, row, col)) {
             int winner = check_winner(&server->game);
 
-            // OdoĹˇleme aktualizovanĂş mapu vĹˇetkĂ˝m hrĂˇÄŤom
+            // Poslanie mapy vsetkym hracom
             for (int i = 0; i < PLAYER_COUNT; i++) {
                 send(server->client_sockets[i], &server->game, sizeof(Game), 0);
             }
@@ -88,7 +86,7 @@ void *handle_client(void *arg) {
     	      	}
     		exit(0);
 	    }
-            // Posun na ÄŹalĹˇieho hrĂˇÄŤa a prebudenie jeho vlĂˇkna
+            // Posun na dalsieho hraca
             server->turn = (server->turn + 1) % PLAYER_COUNT;
             pthread_cond_broadcast(&server->turn_cond);
         }

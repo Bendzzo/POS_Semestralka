@@ -11,76 +11,7 @@
 
 void *handle_input(void *arg);
 void *handle_display(void *arg);
-pid_t server_pid = -1;  // PID servera pre možné ukonèenie
-
-void start_client(Client *client, const char *server_ip) {
-    client->socket_fd = connect_to_server(server_ip, PORT);
-    if (client->socket_fd < 0) {
-        perror("Failed to connect");
-        if (server_pid > 0) {
-            kill(server_pid, SIGTERM); // Ak sa nepodarí pripoji, vypneme server
-        }
-        exit(1);
-    }
-
-    pthread_create(&client->display_thread, NULL, handle_display, client);
-    pthread_create(&client->input_thread, NULL, handle_input, client);
-
-    pthread_join(client->display_thread, NULL);
-    pthread_join(client->input_thread, NULL);
-}
-
-void menu() {
-    printf("Choose how you want to start the game:\n");
-    printf("1. Create server\n");
-    printf("2. Connect to server\n");
-    printf("Your choice: ");
-}
-
-int main() {
-    int choice;
-
-    menu();
-    if (scanf("%d", &choice) != 1) {
-        printf("Invalid input. Exiting.\n");
-        return 1;
-    }
-    getchar();  // Ošetrenie newline znaku
-
-    if (choice == 1) {
-        server_pid = fork(); 
-        if (server_pid == 0) {
-            // Spustíme server v subprocess-e
-            execl("./bin/server", "./bin/server", NULL);
-            perror("Failed to start server");
-            exit(1);
-        } else if (server_pid < 0) {
-            perror("Failed to fork");
-            exit(1);
-        } else {
-            printf("Server was created. Waiting for it to start...\n");
-            sleep(1); 
-        }
-    } else if (choice != 2) {
-        printf("Invalid choice. Exiting.\n");
-        exit(0);
-    } else {
-    Client client;
-    start_client(&client, "localhost");
-
-    
-    if (server_pid > 0) {
-        printf("Shutting down server...\n");
-        kill(server_pid, SIGTERM);
-    }
-
-    close(client.socket_fd);
-  }
-
-    
-    
-    return 0;
-}
+pid_t server_pid = -1;  //Nastavim pid_t pre ukoncenie v pripade neuspechu
 
 void *handle_input(void *arg) {
     Client *client = (Client *)arg;
@@ -139,4 +70,70 @@ void *handle_display(void *arg) {
             print_board(&game);
           }
     }
+}
+
+void start_client(Client *client, const char *server_ip) {
+    client->socket_fd = connect_to_server(server_ip, PORT);
+    if (client->socket_fd < 0) {
+        perror("Failed to connect");
+        if (server_pid > 0) {
+            kill(server_pid, SIGTERM); 
+        }
+        exit(1);
+    }
+
+    pthread_create(&client->display_thread, NULL, handle_display, client);
+    pthread_create(&client->input_thread, NULL, handle_input, client);
+
+    pthread_join(client->display_thread, NULL);
+    pthread_join(client->input_thread, NULL);
+}
+
+void menu() {
+    printf("Choose how you want to start the game:\n");
+    printf("1. Create server\n");
+    printf("2. Connect to server\n");
+    printf("Your choice: ");
+}
+
+int main() {
+    int choice;
+
+    menu();
+    if (scanf("%d", &choice) != 1) {
+        printf("Invalid input. Exiting.\n");
+        return 1;
+    }
+    getchar();
+
+    if (choice == 1) {
+        server_pid = fork(); 
+        if (server_pid == 0) {
+            // Serve bude bezat v subprocese
+            execl("./bin/server", "./bin/server", NULL);
+            perror("Failed to start server");
+            exit(1);
+        } else if (server_pid < 0) {
+            perror("Failed to fork");
+            exit(1);
+        } else {
+            printf("Server was created. Waiting for it to start...\n");
+            sleep(1); 
+        }
+    } else if (choice != 2) {
+        printf("Invalid choice. Exiting.\n");
+        exit(0);
+    } else {
+    Client client;
+    start_client(&client, "localhost");
+
+    
+    if (server_pid > 0) {
+        printf("Shutting down server...\n");
+        kill(server_pid, SIGTERM);
+    }
+
+    close(client.socket_fd);
+  }  
+    return 0;
 }

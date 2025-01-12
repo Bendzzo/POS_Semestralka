@@ -7,5 +7,5 @@ void passive_socket_destroy(int socket);
 int connect_to_server(const char * name, const int port);
 void active_socket_destroy(int socket);
 
-#endif // !SOCKET
+#endif
 
